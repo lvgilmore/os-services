@@ -1,0 +1,45 @@
+---
+# refresh everything we know
+- meta: refresh_inventory
+- include_vars:
+    file: all.yml
+
+- name: "check if already part of a swarm"
+  shell: "docker info | grep -q 'Swarm: active'"
+  register: is_swarm
+  ignore_errors: yes
+
+- name: "SWARM TOKEN | validate existing token"
+  command: "docker swarm join {{ token['address'] }} --token {{ token['manager'] }}"
+  register: join
+  when: is_swarm.rc != 0
+  ignore_errors: yes
+
+- name: "SWARM TOKEN | if validation failed - initiliaze new cluster"
+  command: "docker swarm init"
+  when: ( is_swarm is undefined or is_swarm.rc != 0 ) and ( join is undefined or join.rc != 0 )
+
+- name: "SWARM TOKEN | get manager token"
+  command: "docker swarm join-token -q manager"
+  register: token_manager
+
+- name: "SWARM TOKEN | get worker token"
+  command: "docker swarm join-token -q worker"
+  register: token_worker
+
+- name: "SWARM TOKEN | get cluster id"
+  shell: "docker info | sed -n '/^Swarm:/,/^[A-Z][a-z]*:/p' | sed -n 's/ *ClusterID: //p' "
+  register: token_clusterid
+
+- name: "SWARM TOKEN | get cluster address"
+  shell: "docker info | grep -A1 'Manager Addresses:' | tail -1 | sed 's/^ *//'"
+  register: token_address
+
+- name: "SWARM TOKEN | set vars for next generations"
+  template:
+    src: "all.yml.j2"
+    dest: "{{ item }}"
+  with_items:
+    - "{{ pwd }}/roles/get-swarm-tokens/vars/all.yml"
+    - "{{ pwd }}/roles/join-cluster/vars/all.yml"
+  delegate_to: localhost

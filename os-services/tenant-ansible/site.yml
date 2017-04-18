@@ -1,0 +1,19 @@
+---
+- name: Install docker rpm
+  hosts: 
+    - swarm
+  roles: 
+    - docker
+
+- name: Get/Generate swarm token
+  hosts:
+    - swarm-manager
+  roles:
+    - get-swarm-tokens
+  serial: 1
+
+- name: Join all nodes to cluster
+  hosts:
+    - swarm
+  roles:
+    - join-cluster
