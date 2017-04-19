@@ -1,0 +1,18 @@
+---
+# refresh everything we know
+- meta: refresh_inventory
+- include_vars:
+    file: all.yml
+
+- name: "JOIN SWARM | get swarm cluster id"
+  shell: "docker info | sed -n '/^Swarm:/,/^[A-Z][a-z]*:/p' | sed -n 's/ *ClusterID: //p'"
+  register: clusterid
+
+
+- name: "JOIN SWARM | if not part of the right swarm - leave"
+  command: "docker swarm leave -f"
+  when: clusterid != token_clusterid
+
+- name: "JOIN SWARM | join swarm"
+  command: "docker swarm join --token {{ token_manager }} {{ token_address }}"
+  when: clusterid != token_clusterid

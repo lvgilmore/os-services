@@ -1,0 +1,16 @@
+---
+- name: "Docker | install packages"
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - docker-ce
+    - docker-ce-selinux
+  notify: enable docker
+
+- name: "Docker | configure service"
+  template:
+     src: "docker.service.j2"
+     dest: "/usr/lib/systemd/system/docker.service"
+  notify: reload docker
+

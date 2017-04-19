@@ -1,0 +1,17 @@
+[swarm-manager]
+# this is a test setup. for production, edit the following list to include manager nodes.
+localhost
+
+[swarm-manager:vars]
+# this is a test setup. for production, edit the following list to include worker nodes.
+swarm_role = manager
+
+[swarm-worker]
+localhost
+
+[swarm-worker:vars]
+swarm_role = worker
+
+[swarm:children]
+swarm-manager
+swarm-worker
